@@ -6,9 +6,9 @@ import 'package:quiver/iterables.dart';
 
 import '../../utils.dart';
 
-const _cellSize = 10;
+const cyclopCellSize = 10;
 
-const _gridSize = 90.0;
+const cyclopGridSize = 90.0;
 
 class EyeDropOverlay extends StatelessWidget {
   final Offset? cursorPosition;
@@ -27,13 +27,16 @@ class EyeDropOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return cursorPosition != null
         ? Positioned(
-            left: cursorPosition!.dx - (_gridSize / 2),
-            top: cursorPosition!.dy -
-                (_gridSize / 2),
-            width: _gridSize,
-            height: _gridSize,
-            child: _buildZoom(),
-          )
+      left: cursorPosition!.dx - (cyclopGridSize / 2),
+
+      /// Remove (cyclopGridSize / 2) - (touchable ? _gridSize / 2 : 0) to place below finger tip
+      top: cursorPosition!.dy -
+          (cyclopGridSize / 2) -
+          (touchable ? cyclopGridSize / 2 : 0),
+      width: cyclopGridSize,
+      height: cyclopGridSize,
+      child: _buildZoom(),
+    )
         : const SizedBox.shrink();
   }
 
@@ -46,12 +49,12 @@ class EyeDropOverlay extends StatelessWidget {
           border: Border.all(
               width: 8, color: colors.isEmpty ? Colors.white : colors.center),
         ),
-        width: _gridSize,
-        height: _gridSize,
-        constraints: BoxConstraints.loose(const Size.square(_gridSize)),
+        width: cyclopGridSize,
+        height: cyclopGridSize,
+        constraints: BoxConstraints.loose(const Size.square(cyclopGridSize)),
         child: ClipOval(
           child: CustomPaint(
-            size: const Size.square(_gridSize),
+            size: const Size.square(cyclopGridSize),
             painter: _PixelGridPainter(colors),
           ),
         ),
@@ -76,42 +79,45 @@ class _PixelGridPainter extends CustomPainter {
 
   @override
   void paint(ui.Canvas canvas, ui.Size size) {
-    final stroke = Paint()
+/*    final stroke = Paint()
       ..color = Colors.white
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke;*/
 
     final blackLine = Paint()
       ..color = Colors.black
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    final selectedStroke = Paint()
+/*    final selectedStroke = Paint()
       ..color = Colors.white
       ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke;*/
 
-    // fill pixels color square
+    ///Removed pixels color filled squares
+/*    // fill pixels color square
     for (final color in enumerate(colors)) {
       final fill = Paint()..color = color.value;
       final rect = Rect.fromLTWH(
-        (color.index % gridSize).toDouble() * _cellSize,
-        ((color.index ~/ gridSize) % gridSize).toDouble() * _cellSize,
-        _cellSize.toDouble(),
-        _cellSize.toDouble(),
+        (color.index % gridSize).toDouble() * cyclopCellSize,
+        ((color.index ~/ gridSize) % gridSize).toDouble() * cyclopCellSize,
+        cyclopCellSize.toDouble(),
+        cyclopCellSize.toDouble(),
       );
       canvas.drawRect(rect, fill);
-    }
+    }*/
 
     // draw pixels borders after fills
     for (final color in enumerate(colors)) {
       final rect = Rect.fromLTWH(
-        (color.index % gridSize).toDouble() * _cellSize,
-        ((color.index ~/ gridSize) % gridSize).toDouble() * _cellSize,
-        _cellSize.toDouble(),
-        _cellSize.toDouble(),
+        (color.index % gridSize).toDouble() * cyclopCellSize,
+        ((color.index ~/ gridSize) % gridSize).toDouble() * cyclopCellSize,
+        cyclopCellSize.toDouble(),
+        cyclopCellSize.toDouble(),
       );
-      canvas.drawRect(
-          rect, color.index == colors.length ~/ 2 ? selectedStroke : stroke);
+
+      ///Remove the rectangular borders
+/*      canvas.drawRect(
+          rect, color.index == colors.length ~/ 2 ? selectedStroke : stroke);*/
 
       if (color.index == colors.length ~/ 2) {
         canvas.drawRect(rect.deflate(1), blackLine);
@@ -120,7 +126,7 @@ class _PixelGridPainter extends CustomPainter {
 
     // black contrast ring
     canvas.drawCircle(
-      const Offset((_gridSize) / 2, (_gridSize) / 2),
+      const Offset((cyclopGridSize) / 2, (cyclopGridSize) / 2),
       eyeRadius,
       blackStroke,
     );

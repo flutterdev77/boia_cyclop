@@ -29,8 +29,7 @@ class EyeDropOverlay extends StatelessWidget {
         ? Positioned(
             left: cursorPosition!.dx - (_gridSize / 2),
             top: cursorPosition!.dy -
-                (_gridSize / 2) -
-                (touchable ? _gridSize / 2 : 0),
+                (_gridSize / 2),
             width: _gridSize,
             height: _gridSize,
             child: _buildZoom(),

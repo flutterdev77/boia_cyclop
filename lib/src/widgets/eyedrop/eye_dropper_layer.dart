@@ -137,7 +137,7 @@ class EyeDrop extends InheritedWidget {
         cursorPosition: data.cursorPosition,
       ),
     );
-    Overlay.of(context)?.insert(data.eyeOverlayEntry!);
+    Overlay.of(context).insert(data.eyeOverlayEntry!);
   }
 
   @override

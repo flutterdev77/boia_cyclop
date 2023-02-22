@@ -17,7 +17,9 @@ class _EyeDropperModel {
 
   img.Image? snapshot;
 
-  Offset cursorPosition = screenSize.topCenter(Offset.zero);
+  Offset cursorPosition = screenSize.center(Offset(
+    WidgetsBinding.instance.window.physicalSize.width / 2,
+    WidgetsBinding.instance.window.physicalSize.height / 2,),);
 
   Color hoverColor = Colors.black;
 
@@ -37,26 +39,29 @@ class EyeDrop extends InheritedWidget {
 
   EyeDrop({required Widget child, Key? key})
       : super(
-          key: key,
-          child: RepaintBoundary(
-            key: captureKey,
-            child: Listener(
-              /// Causes Overlay to move based on our gesture
-              onPointerMove: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
-              onPointerHover: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
+    key: key,
+    child: RepaintBoundary(
+      key: captureKey,
+      child: Listener(
 
-              /// Causes Overlay to vanish once the tap is released
-              onPointerUp: (details) => _onPointerUp(details.position),
-              child: child,
+        /// Causes Overlay to move based on our gesture
+        onPointerMove: (details) =>
+            _onHover(
+              details.position,
+              details.kind == PointerDeviceKind.touch,
             ),
-          ),
-        );
+        onPointerHover: (details) =>
+            _onHover(
+              details.position,
+              details.kind == PointerDeviceKind.touch,
+            ),
+
+        /// Causes Overlay to vanish once the tap is released
+        onPointerUp: (details) => _onPointerUp(details.position),
+        child: child,
+      ),
+    ),
+  );
 
   static EyeDrop of(BuildContext context) {
     final eyeDrop = context.dependOnInheritedWidgetOfExactType<EyeDrop>();
@@ -119,7 +124,7 @@ class EyeDrop extends InheritedWidget {
   void capture(BuildContext context, ValueChanged<Color> onColorSelected,
       ValueChanged<Color>? onColorChanged) async {
     final renderer =
-        captureKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+    captureKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
 
     if (renderer == null) return;
 
@@ -131,11 +136,12 @@ class EyeDrop extends InheritedWidget {
     if (data.snapshot == null) return;
 
     data.eyeOverlayEntry = OverlayEntry(
-      builder: (_) => EyeDropOverlay(
-        touchable: data.touchable,
-        colors: data.hoverColors,
-        cursorPosition: data.cursorPosition,
-      ),
+      builder: (_) =>
+          EyeDropOverlay(
+            touchable: data.touchable,
+            colors: data.hoverColors,
+            cursorPosition: data.cursorPosition,
+          ),
     );
     Overlay.of(context).insert(data.eyeOverlayEntry!);
   }

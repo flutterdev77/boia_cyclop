@@ -57,7 +57,12 @@ class EyeDrop extends InheritedWidget {
               ),
 
               /// Causes Overlay to vanish once the tap is released
-              onPointerUp: (details) {},
+              onPointerUp: (details) {
+                _onHover(
+                  details.position,
+                  data.touchable,
+                );
+              },
               child: child,
             ),
           ),

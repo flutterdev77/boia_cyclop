@@ -13,11 +13,13 @@ const cyclopGridSize = 90.0;
 class EyeDropOverlay extends StatelessWidget {
   final Offset? cursorPosition;
   final bool touchable;
+  final VoidCallback onDone;
 
   final List<Color> colors;
 
   const EyeDropOverlay({
     required this.colors,
+    required this.onDone,
     this.cursorPosition,
     this.touchable = false,
     Key? key,
@@ -26,17 +28,41 @@ class EyeDropOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return cursorPosition != null
-        ? Positioned(
-      left: cursorPosition!.dx - (cyclopGridSize / 2),
+        ? Stack(
+            children: [
+              Positioned(
+                left: cursorPosition!.dx - (cyclopGridSize / 2),
 
-      /// Remove (cyclopGridSize / 2) - (touchable ? _gridSize / 2 : 0) to place below finger tip
-      top: cursorPosition!.dy -
-          (cyclopGridSize / 2) -
-          (touchable ? cyclopGridSize / 2 : 0),
-      width: cyclopGridSize,
-      height: cyclopGridSize,
-      child: _buildZoom(),
-    )
+                /// Remove (cyclopGridSize / 2) - (touchable ? _gridSize / 2 : 0) to place below finger tip
+                top: cursorPosition!.dy -
+                    (cyclopGridSize / 2) -
+                    (touchable ? cyclopGridSize / 2 : 0),
+                width: cyclopGridSize,
+                height: cyclopGridSize,
+                child: _buildZoom(),
+              ),
+              Positioned(
+                left: cursorPosition!.dx - (cyclopGridSize / 2),
+                top: cursorPosition!.dy - (cyclopGridSize * 1.5),
+                width: cyclopGridSize,
+                child: IgnorePointer(
+                  ignoring: true,
+                  child: TextButton(
+                    style: ButtonStyle(
+                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24.0),
+                          side: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                    ),
+                    onPressed: onDone,
+                    child: const Text('Done'),
+                  ),
+                ),
+              ),
+            ],
+          )
         : const SizedBox.shrink();
   }
 

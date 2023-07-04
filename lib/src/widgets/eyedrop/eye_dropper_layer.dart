@@ -29,6 +29,11 @@ class _EyeDropperModel {
 
   ValueChanged<Color>? onColorChanged;
 
+  VoidCallback onDone() {
+    EyeDrop.onPointerUp();
+    return () {};
+  }
+
   _EyeDropperModel();
 }
 
@@ -52,7 +57,7 @@ class EyeDrop extends InheritedWidget {
               ),
 
               /// Causes Overlay to vanish once the tap is released
-              onPointerUp: (details) => _onPointerUp(details.position),
+              onPointerUp: (details) {},
               child: child,
             ),
           ),
@@ -67,8 +72,7 @@ class EyeDrop extends InheritedWidget {
     return eyeDrop;
   }
 
-  static void _onPointerUp(Offset position) {
-    _onHover(position, data.touchable);
+  static onPointerUp() {
     if (data.onColorSelected != null) {
       data.onColorSelected!(data.hoverColors.center);
     }
@@ -140,6 +144,7 @@ class EyeDrop extends InheritedWidget {
         touchable: data.touchable,
         colors: data.hoverColors,
         cursorPosition: data.cursorPosition,
+        onDone: data.onDone!,
       ),
     );
     Overlay.of(context).insert(data.eyeOverlayEntry!);

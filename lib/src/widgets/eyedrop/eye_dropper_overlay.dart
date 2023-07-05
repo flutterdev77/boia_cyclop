@@ -11,51 +11,30 @@ const cyclopCellSize = 10;
 const cyclopGridSize = 90.0;
 
 class EyeDropOverlay extends StatelessWidget {
-  final Offset? cursorPosition;
   final bool touchable;
   final List<Color> colors;
 
   const EyeDropOverlay({
     required this.colors,
-    this.cursorPosition,
     this.touchable = false,
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return cursorPosition != null
-        ? Positioned(
-            left: cursorPosition!.dx - (cyclopGridSize / 2),
-
-            /// Remove (cyclopGridSize / 2) - (touchable ? _gridSize / 2 : 0) to place below finger tip
-            top: cursorPosition!.dy -
-                (cyclopGridSize / 2) -
-                (touchable ? cyclopGridSize / 2 : 0),
-            width: cyclopGridSize,
-            height: cyclopGridSize,
-            child: _buildZoom(),
-          )
-        : const SizedBox.shrink();
-  }
-
-  Widget _buildZoom() {
-    return IgnorePointer(
-      ignoring: true,
-      child: Container(
-        foregroundDecoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-              width: 8, color: colors.isEmpty ? Colors.white : colors.center),
-        ),
-        width: cyclopGridSize,
-        height: cyclopGridSize,
-        constraints: BoxConstraints.loose(const Size.square(cyclopGridSize)),
-        child: ClipOval(
-          child: CustomPaint(
-            size: const Size.square(cyclopGridSize),
-            painter: _PixelGridPainter(colors),
-          ),
+    return Container(
+      foregroundDecoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+            width: 8, color: colors.isEmpty ? Colors.white : colors.center),
+      ),
+      width: cyclopGridSize,
+      height: cyclopGridSize,
+      constraints: BoxConstraints.loose(const Size.square(cyclopGridSize)),
+      child: ClipOval(
+        child: CustomPaint(
+          size: const Size.square(cyclopGridSize),
+          painter: _PixelGridPainter(colors),
         ),
       ),
     );

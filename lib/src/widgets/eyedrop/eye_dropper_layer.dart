@@ -40,29 +40,7 @@ class EyeDrop extends InheritedWidget {
           key: key,
           child: RepaintBoundary(
             key: captureKey,
-            child: GestureDetector(
-              onTap: _removeOverlay,
-              child: Listener(
-                /// Causes Overlay to move based on our gesture
-                onPointerMove: (details) => _onHover(
-                  details.position,
-                  details.kind == PointerDeviceKind.touch,
-                ),
-                onPointerHover: (details) => _onHover(
-                  details.position,
-                  details.kind == PointerDeviceKind.touch,
-                ),
-
-                /// Causes Overlay to vanish once the tap is released
-                onPointerUp: (details) {
-                  _onHover(
-                    details.position,
-                    details.kind == PointerDeviceKind.touch,
-                  );
-                },
-                child: child,
-              ),
-            ),
+            child: child,
           ),
         );
 
@@ -144,38 +122,65 @@ class EyeDrop extends InheritedWidget {
     data.eyeOverlayEntry = OverlayEntry(
       builder: (_) => Stack(
         children: [
-          EyeDropOverlay(
-            touchable: data.touchable,
-            colors: data.hoverColors,
-            cursorPosition: data.cursorPosition,
+          Positioned(
+            left: data.cursorPosition.dx - (cyclopGridSize / 2),
+
+            /// Remove (cyclopGridSize / 2) - (touchable ? _gridSize / 2 : 0) to place below finger tip
+            top: data.cursorPosition.dy -
+                (cyclopGridSize / 2) -
+                (data.touchable ? cyclopGridSize / 2 : 0),
+            width: cyclopGridSize,
+            height: cyclopGridSize,
+            child: Listener(
+              /// Causes Overlay to move based on our gesture
+              onPointerMove: (details) => _onHover(
+                details.position,
+                details.kind == PointerDeviceKind.touch,
+              ),
+              onPointerHover: (details) => _onHover(
+                details.position,
+                details.kind == PointerDeviceKind.touch,
+              ),
+
+              /// Causes Overlay to vanish once the tap is released
+              onPointerUp: (details) {
+                _onHover(
+                  details.position,
+                  details.kind == PointerDeviceKind.touch,
+                );
+              },
+              child: EyeDropOverlay(
+                touchable: data.touchable,
+                colors: data.hoverColors,
+              ),
+            ),
           ),
           Positioned(
             left: data.cursorPosition.dx - (cyclopGridSize / 2),
             top: data.cursorPosition.dy - (cyclopGridSize * 1.5),
             width: cyclopGridSize,
-            child: IgnorePointer(
-              ignoring: true,
-              child: TextButton(
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith((states) {
-                    // If the button is pressed, return green, otherwise blue
-                    if (states.contains(MaterialState.pressed)) {
-                      return Colors.green;
-                    }
-                    return Colors.blue;
-                  }),
-                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24.0),
-                      side: const BorderSide(color: Colors.black),
-                    ),
+            child: TextButton(
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.resolveWith((states) {
+                  // If the button is pressed, return green, otherwise blue
+                  if (states.contains(MaterialState.pressed)) {
+                    return Colors.green;
+                  }
+                  return Colors.blue;
+                }),
+                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24.0),
+                    side: const BorderSide(color: Colors.black),
                   ),
                 ),
-                onPressed: () {},
-                child: const Text(
-                  'Done',
-                  style: TextStyle(color: Colors.white),
-                ),
+              ),
+              onPressed: () {
+                _removeOverlay();
+              },
+              child: const Text(
+                'Done',
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ),

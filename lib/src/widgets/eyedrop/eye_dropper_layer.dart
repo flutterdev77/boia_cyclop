@@ -40,25 +40,28 @@ class EyeDrop extends InheritedWidget {
           key: key,
           child: RepaintBoundary(
             key: captureKey,
-            child: Listener(
-              /// Causes Overlay to move based on our gesture
-              onPointerMove: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
-              onPointerHover: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
-
-              /// Causes Overlay to vanish once the tap is released
-              onPointerUp: (details) {
-                _onHover(
+            child: GestureDetector(
+              onTap: _removeOverlay,
+              child: Listener(
+                /// Causes Overlay to move based on our gesture
+                onPointerMove: (details) => _onHover(
                   details.position,
                   details.kind == PointerDeviceKind.touch,
-                );
-              },
-              child: child,
+                ),
+                onPointerHover: (details) => _onHover(
+                  details.position,
+                  details.kind == PointerDeviceKind.touch,
+                ),
+
+                /// Causes Overlay to vanish once the tap is released
+                onPointerUp: (details) {
+                  _onHover(
+                    details.position,
+                    details.kind == PointerDeviceKind.touch,
+                  );
+                },
+                child: child,
+              ),
             ),
           ),
         );
@@ -72,7 +75,7 @@ class EyeDrop extends InheritedWidget {
     return eyeDrop;
   }
 
-  void _removeOverlay() {
+  static void _removeOverlay() {
     if (data.onColorSelected != null) {
       data.onColorSelected!(data.hoverColors.center);
     }
@@ -168,7 +171,7 @@ class EyeDrop extends InheritedWidget {
                     ),
                   ),
                 ),
-                onPressed: _removeOverlay,
+                onPressed: () {},
                 child: const Text(
                   'Done',
                   style: TextStyle(color: Colors.white),

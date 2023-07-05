@@ -29,11 +29,6 @@ class _EyeDropperModel {
 
   ValueChanged<Color>? onColorChanged;
 
-  VoidCallback onDone() {
-    EyeDrop.onPointerUp();
-    return () {};
-  }
-
   _EyeDropperModel();
 }
 
@@ -60,7 +55,7 @@ class EyeDrop extends InheritedWidget {
               onPointerUp: (details) {
                 _onHover(
                   details.position,
-                  data.touchable,
+                  details.kind == PointerDeviceKind.touch,
                 );
               },
               child: child,
@@ -77,11 +72,10 @@ class EyeDrop extends InheritedWidget {
     return eyeDrop;
   }
 
-  static onPointerUp() {
+  void _removeOverlay() {
     if (data.onColorSelected != null) {
       data.onColorSelected!(data.hoverColors.center);
     }
-
     if (data.eyeOverlayEntry != null) {
       try {
         data.eyeOverlayEntry!.remove();
@@ -89,7 +83,7 @@ class EyeDrop extends InheritedWidget {
         data.onColorSelected = null;
         data.onColorChanged = null;
       } catch (err) {
-        debugPrint('ERROR !!! _onPointerUp $err');
+        debugPrint('ERROR !!! removeOverlay $err');
       }
     }
   }
@@ -145,11 +139,44 @@ class EyeDrop extends InheritedWidget {
     );
 
     data.eyeOverlayEntry = OverlayEntry(
-      builder: (_) => EyeDropOverlay(
-        touchable: data.touchable,
-        colors: data.hoverColors,
-        cursorPosition: data.cursorPosition,
-        onDone: data.onDone!,
+      builder: (_) => Stack(
+        children: [
+          EyeDropOverlay(
+            touchable: data.touchable,
+            colors: data.hoverColors,
+            cursorPosition: data.cursorPosition,
+          ),
+          Positioned(
+            left: data.cursorPosition.dx - (cyclopGridSize / 2),
+            top: data.cursorPosition.dy - (cyclopGridSize * 1.5),
+            width: cyclopGridSize,
+            child: IgnorePointer(
+              ignoring: true,
+              child: TextButton(
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith((states) {
+                    // If the button is pressed, return green, otherwise blue
+                    if (states.contains(MaterialState.pressed)) {
+                      return Colors.green;
+                    }
+                    return Colors.blue;
+                  }),
+                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24.0),
+                      side: const BorderSide(color: Colors.black),
+                    ),
+                  ),
+                ),
+                onPressed: _removeOverlay,
+                child: const Text(
+                  'Done',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
     Overlay.of(context).insert(data.eyeOverlayEntry!);

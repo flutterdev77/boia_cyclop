@@ -9,9 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  image: ^3.0.5
+  image: ^4.0.17
   quiver: ^3.2.1
-  basics: ^0.6.0
+  basics: ^0.10.0
 
 dev_dependencies:
   flutter_test:

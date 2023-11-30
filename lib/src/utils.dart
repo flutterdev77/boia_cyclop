@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:image/image.dart' as img;
+import 'package:image/image.dart' as image;
 
 //bool get isPhoneScreen => !(screenSize.shortestSide >= 600);
 
@@ -79,7 +79,7 @@ List<Color> getHueGradientColors({double? saturation, int steps = 36}) =>
 const samplingGridSize = 9;
 
 List<Color> getPixelColors(
-  img.Image image,
+  image.Image image,
   Offset offset, {
   int size = samplingGridSize,
 }) =>
@@ -91,12 +91,19 @@ List<Color> getPixelColors(
       ),
     );
 
-Color getPixelColor(img.Image image, Offset offset) => (offset.dx >= 0 &&
-        offset.dy >= 0 &&
-        offset.dx < image.width &&
-        offset.dy < image.height)
-    ? abgr2Color(image.getPixel(offset.dx.toInt(), offset.dy.toInt()))
-    : const Color(0x00000000);
+Color getPixelColor(image.Image image, Offset offset) {
+  final imageData = image.getPixelSafe(offset.dx.toInt(), offset.dy.toInt());
+  final data = imageData.image.buffer.asUint32List();
+  final pixelValue =
+      data[offset.dy.floor() * image.width.floor() + offset.dx.floor()];
+
+  return (offset.dx >= 0 &&
+          offset.dy >= 0 &&
+          offset.dx < image.width &&
+          offset.dy < image.height)
+      ? abgr2Color(pixelValue)
+      : const Color(0x00000000);
+}
 
 ui.Offset _offsetFromIndex(int index, int numColumns) => Offset(
       (index % numColumns).toDouble(),
@@ -112,15 +119,19 @@ Color abgr2Color(int value) {
   return Color.fromARGB(a, r, g, b);
 }
 
-Future<img.Image?> repaintBoundaryToImage(
+Future<image.Image?> repaintBoundaryToImage(
   RenderRepaintBoundary renderer,
 ) async {
   try {
     final rawImage = await renderer.toImage(pixelRatio: 1);
     final byteData =
         await rawImage.toByteData(format: ui.ImageByteFormat.rawRgba);
-    final pngBytes = byteData!.buffer.asUint8List();
-    return img.Image.fromBytes(rawImage.width, rawImage.height, pngBytes);
+    final pngBytes = byteData!.buffer;
+    return image.Image.fromBytes(
+      width: rawImage.width,
+      height: rawImage.height,
+      bytes: pngBytes,
+    );
   } catch (err) {
     return null;
   }

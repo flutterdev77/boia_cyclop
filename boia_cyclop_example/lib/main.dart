@@ -5,12 +5,25 @@ void main() async {
   runApp(const App());
 }
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({Key? key}) : super(key: key);
 
   @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  final globalKey = GlobalKey();
+
+  @override
+  void dispose() {
+    globalKey.currentState?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => MaterialApp(
-        home: EyeDrop(child: const MainScreen()),
+        home: EyeDrop(captureKey: globalKey, child: const MainScreen()),
         debugShowCheckedModeBanner: false,
       );
 }

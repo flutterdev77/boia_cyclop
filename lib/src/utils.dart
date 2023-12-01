@@ -2,9 +2,10 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:image/image.dart' as image;
+import 'package:image/image.dart' as img;
 
 //bool get isPhoneScreen => !(screenSize.shortestSide >= 600);
+
 
 Size get screenSize => ui.window.physicalSize / ui.window.devicePixelRatio;
 
@@ -79,7 +80,7 @@ List<Color> getHueGradientColors({double? saturation, int steps = 36}) =>
 const samplingGridSize = 9;
 
 List<Color> getPixelColors(
-  image.Image image,
+  img.Image image,
   Offset offset, {
   int size = samplingGridSize,
 }) =>
@@ -91,24 +92,26 @@ List<Color> getPixelColors(
       ),
     );
 
-Color getPixelColor(image.Image image, Offset offset) {
-  final imageData = image.getPixelSafe(offset.dx.toInt(), offset.dy.toInt());
-  final data = imageData.image.buffer.asUint32List();
-  final pixelValue =
-      data[offset.dy.floor() * image.width.floor() + offset.dx.floor()];
-
-  return (offset.dx >= 0 &&
-          offset.dy >= 0 &&
-          offset.dx < image.width &&
-          offset.dy < image.height)
-      ? abgr2Color(pixelValue)
-      : const Color(0x00000000);
-}
+Color getPixelColor(img.Image image, Offset offset) => (offset.dx >= 0 &&
+        offset.dy >= 0 &&
+        offset.dx < image.width &&
+        offset.dy < image.height)
+    ? pixel2Color(image.getPixel(offset.dx.toInt(), offset.dy.toInt()))
+    : const Color(0x00000000);
 
 ui.Offset _offsetFromIndex(int index, int numColumns) => Offset(
       (index % numColumns).toDouble(),
       ((index ~/ numColumns) % numColumns).toDouble(),
     );
+
+/*Color toColorFlutter(img.Color c)
+{
+  return Color(c.)
+}*/
+
+Color pixel2Color(img.Pixel p) {
+  return Color.fromARGB(p.a.toInt(), p.r.toInt(), p.g.toInt(), p.b.toInt());
+}
 
 Color abgr2Color(int value) {
   final a = (value >> 24) & 0xFF;
@@ -119,20 +122,27 @@ Color abgr2Color(int value) {
   return Color.fromARGB(a, r, g, b);
 }
 
-Future<image.Image?> repaintBoundaryToImage(
+Future<img.Image?> repaintBoundaryToImage(
   RenderRepaintBoundary renderer,
 ) async {
   try {
     final rawImage = await renderer.toImage(pixelRatio: 1);
     final byteData =
-        await rawImage.toByteData(format: ui.ImageByteFormat.rawRgba);
-    final pngBytes = byteData!.buffer;
-    return image.Image.fromBytes(
+        await rawImage.toByteData(format: ui.ImageByteFormat.rawStraightRgba);
+
+    if (byteData == null) throw Exception('Null image byteData !');
+
+    final pngBytes = byteData.buffer;
+
+    return img.Image.fromBytes(
       width: rawImage.width,
       height: rawImage.height,
       bytes: pngBytes,
+      order: img.ChannelOrder.rgba,
     );
-  } catch (err) {
-    return null;
+  } catch (err, stackTrace) {
+    debugPrint('repaintBoundaryToImage... $err $stackTrace');
+
+    rethrow;
   }
 }

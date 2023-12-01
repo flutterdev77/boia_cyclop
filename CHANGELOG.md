@@ -1,3 +1,10 @@
+# 0.7.0
+- fix EyedropperButton ( repaintBoundaryToImage )
+- Dart 3.0
+
+# 0.6.2
+- upgrade dependencies and minor refactoring
+
 # 0.6.1
 
 - Update the deprecated theme properties

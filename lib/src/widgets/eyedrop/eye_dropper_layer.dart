@@ -7,7 +7,9 @@ import 'package:image/image.dart' as img;
 import '../../utils.dart';
 import 'eye_dropper_overlay.dart';
 
-class _EyeDropperModel {
+const _gridSize = 90.0;
+
+class EyeDropperModel {
   /// based on PointerEvent.kind
   bool touchable = false;
 
@@ -15,7 +17,7 @@ class _EyeDropperModel {
 
   img.Image? snapshot;
 
-  Offset cursorPosition = screenSize.topCenter(Offset.zero);
+  Offset cursorPosition = screenSize.center(Offset.zero);
 
   Color hoverColor = Colors.black;
 
@@ -27,13 +29,13 @@ class _EyeDropperModel {
 
   ValueChanged<Color>? onColorChanged;
 
-  _EyeDropperModel();
+  EyeDropperModel();
 }
 
 class EyeDrop extends InheritedWidget {
-  static _EyeDropperModel data = _EyeDropperModel();
+  static EyeDropperModel data = EyeDropperModel();
 
-  final GlobalKey captureKey; // Add this line
+  final GlobalKey captureKey;
 
   EyeDrop({
     required Widget child,
@@ -43,7 +45,18 @@ class EyeDrop extends InheritedWidget {
           key: key,
           child: RepaintBoundary(
             key: captureKey,
-            child: child,
+            child: Listener(
+              onPointerMove: (details) => _onHover(
+                details.position,
+                details.kind == PointerDeviceKind.touch,
+              ),
+              onPointerHover: (details) => _onHover(
+                details.position,
+                details.kind == PointerDeviceKind.touch,
+              ),
+              onPointerUp: (details) {},
+              child: child,
+            ),
           ),
         );
 
@@ -56,10 +69,12 @@ class EyeDrop extends InheritedWidget {
     return eyeDrop;
   }
 
-  static void _removeOverlay() {
+  static void _onPointerUp(Offset position) {
+    _onHover(position, data.touchable);
     if (data.onColorSelected != null) {
       data.onColorSelected!(data.hoverColors.center);
     }
+
     if (data.eyeOverlayEntry != null) {
       try {
         data.eyeOverlayEntry!.remove();
@@ -67,7 +82,7 @@ class EyeDrop extends InheritedWidget {
         data.onColorSelected = null;
         data.onColorChanged = null;
       } catch (err) {
-        debugPrint('ERROR !!! removeOverlay $err');
+        debugPrint('ERROR !!! _onPointerUp $err');
       }
     }
   }
@@ -75,27 +90,13 @@ class EyeDrop extends InheritedWidget {
   static void _onHover(Offset offset, bool touchable) {
     if (data.eyeOverlayEntry != null) data.eyeOverlayEntry!.markNeedsBuild();
 
-    data.cursorPosition = Offset(
-      offset.dx,
-      offset.dy - cyclopGridSize / 4,
-    );
+    data.cursorPosition = offset;
 
     data.touchable = touchable;
 
     if (data.snapshot != null) {
-      data.hoverColor = getPixelColor(
-        data.snapshot!,
-        Offset(
-          offset.dx,
-          offset.dy - ((cyclopGridSize / 2) + (cyclopGridSize / 4)),
-        ),
-      );
-      data.hoverColors = getPixelColors(
-          data.snapshot!,
-          Offset(
-            offset.dx,
-            offset.dy - ((cyclopGridSize / 2) + (cyclopGridSize / 4)),
-          ));
+      data.hoverColor = getPixelColor(data.snapshot!, offset);
+      data.hoverColors = getPixelColors(data.snapshot!, offset);
     }
 
     if (data.onColorChanged != null) {
@@ -103,8 +104,11 @@ class EyeDrop extends InheritedWidget {
     }
   }
 
-  void capture(BuildContext context, ValueChanged<Color> onColorSelected,
-      ValueChanged<Color>? onColorChanged) async {
+  void capture(
+    BuildContext context,
+    ValueChanged<Color> onColorSelected,
+    ValueChanged<Color>? onColorChanged,
+  ) async {
     final renderer =
         captureKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
 
@@ -117,84 +121,84 @@ class EyeDrop extends InheritedWidget {
 
     if (data.snapshot == null) return;
 
-    data.cursorPosition = Offset(
-      MediaQuery.of(context).size.width / 2,
-      MediaQuery.of(context).size.height / 2,
-    );
-
     data.eyeOverlayEntry = OverlayEntry(
       builder: (_) => Stack(
+        clipBehavior: Clip.none,
         children: [
-          Positioned(
-            left: data.cursorPosition.dx - (cyclopGridSize / 2),
-
-            /// Remove (cyclopGridSize / 2) - (touchable ? _gridSize / 2 : 0) to place below finger tip
-            top: data.cursorPosition.dy -
-                (cyclopGridSize / 2) -
-                (data.touchable ? cyclopGridSize / 2 : 0),
-            width: cyclopGridSize,
-            height: cyclopGridSize,
-            child: Listener(
-              /// Causes Overlay to move based on our gesture
-              onPointerMove: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
-              onPointerHover: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
-
-              /// Causes Overlay to vanish once the tap is released
-              onPointerUp: (details) {
-                _onHover(
-                  details.position,
-                  details.kind == PointerDeviceKind.touch,
-                );
-              },
-              child: EyeDropOverlay(
-                touchable: data.touchable,
-                colors: data.hoverColors,
-              ),
-            ),
+          EyeDropOverlay(
+            touchable: data.touchable,
+            colors: data.hoverColors,
+            cursorPosition: data.cursorPosition,
           ),
           Positioned(
-            left: data.cursorPosition.dx - (cyclopGridSize / 2),
-            top: data.cursorPosition.dy - (cyclopGridSize * 1.5),
-            width: cyclopGridSize,
-            child: TextButton(
-              style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.resolveWith((states) {
-                  // If the button is pressed, return green, otherwise blue
-                  if (states.contains(MaterialState.pressed)) {
-                    return Colors.green;
-                  }
-                  return Colors.blue;
-                }),
-                shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24.0),
-                    side: const BorderSide(color: Colors.black),
-                  ),
-                ),
-              ),
-              onPressed: () {
-                _removeOverlay();
-              },
-              child: const Text(
-                'Done',
-                style: TextStyle(color: Colors.white),
+            ///80 is the width of button
+            left: data.cursorPosition.dx - 80 / 2,
+
+            ///32 is the size of button and 8 is the padding
+            top: (data.cursorPosition.dy - _gridSize) - 32 - 8,
+            child: SizedBox(
+              height: 32,
+              width: 80,
+              child: CustomTabButtons(
+                title: 'Done',
+                onTap: () {
+                  _onPointerUp(
+                    Offset(
+                      data.cursorPosition.dx,
+                      data.cursorPosition.dy,
+                    ),
+                  );
+                },
               ),
             ),
           ),
         ],
       ),
     );
-    Overlay.of(context).insert(data.eyeOverlayEntry!);
+
+    if (context.mounted) {
+      Overlay.of(context).insert(data.eyeOverlayEntry!);
+    }
   }
 
   @override
   bool updateShouldNotify(EyeDrop oldWidget) {
     return true;
+  }
+}
+
+class CustomTabButtons extends StatelessWidget {
+  const CustomTabButtons({
+    required this.title,
+    required this.onTap,
+    super.key,
+  });
+
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Hero(
+      tag: title,
+      child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.zero,
+            elevation: 2,
+            backgroundColor: const Color(0xff366cf8),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(48)),
+            alignment: Alignment.center,
+          ),
+          onPressed: onTap,
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFD9DEEF),
+            ),
+          )),
+    );
   }
 }

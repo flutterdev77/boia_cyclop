@@ -104,7 +104,7 @@ class EyeDrop extends InheritedWidget {
     }
   }
 
-  void capture(
+  Future<OverlayEntry?> capture(
     BuildContext context,
     ValueChanged<Color> onColorSelected,
     ValueChanged<Color>? onColorChanged,
@@ -112,14 +112,14 @@ class EyeDrop extends InheritedWidget {
     final renderer =
         captureKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
 
-    if (renderer == null) return;
+    if (renderer == null) return null;
 
     data.onColorSelected = onColorSelected;
     data.onColorChanged = onColorChanged;
 
     data.snapshot = await repaintBoundaryToImage(renderer);
 
-    if (data.snapshot == null) return;
+    if (data.snapshot == null) return null;
 
     data.eyeOverlayEntry = OverlayEntry(
       builder: (_) => Stack(
@@ -159,6 +159,8 @@ class EyeDrop extends InheritedWidget {
     if (context.mounted) {
       Overlay.of(context).insert(data.eyeOverlayEntry!);
     }
+
+    return data.eyeOverlayEntry;
   }
 
   @override

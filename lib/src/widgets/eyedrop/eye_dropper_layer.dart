@@ -94,9 +94,12 @@ class EyeDrop extends InheritedWidget {
 
     data.touchable = touchable;
 
+    /// Update the offset to center of the grid
+    final _updatedOffset = offset + Offset(0, -_gridSize / 2);
+
     if (data.snapshot != null) {
-      data.hoverColor = getPixelColor(data.snapshot!, offset);
-      data.hoverColors = getPixelColors(data.snapshot!, offset);
+      data.hoverColor = getPixelColor(data.snapshot!, _updatedOffset);
+      data.hoverColors = getPixelColors(data.snapshot!, _updatedOffset);
     }
 
     if (data.onColorChanged != null) {

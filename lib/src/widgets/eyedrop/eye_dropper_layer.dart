@@ -36,10 +36,12 @@ class EyeDrop extends InheritedWidget {
   static EyeDropperModel data = EyeDropperModel();
 
   final GlobalKey captureKey;
+  final Offset adjustmentOffset;
 
   EyeDrop({
     required Widget child,
     required this.captureKey,
+    this.adjustmentOffset = Offset.zero,
     Key? key,
   }) : super(
           key: key,
@@ -47,13 +49,11 @@ class EyeDrop extends InheritedWidget {
             key: captureKey,
             child: Listener(
               onPointerMove: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
+                  details.position, details.kind == PointerDeviceKind.touch,
+                  adjustmentOffset: adjustmentOffset),
               onPointerHover: (details) => _onHover(
-                details.position,
-                details.kind == PointerDeviceKind.touch,
-              ),
+                  details.position, details.kind == PointerDeviceKind.touch,
+                  adjustmentOffset: adjustmentOffset),
               onPointerUp: (details) {},
               child: child,
             ),
@@ -69,7 +69,9 @@ class EyeDrop extends InheritedWidget {
     return eyeDrop;
   }
 
-  static void _onPointerUp(Offset position) {
+  static void _onPointerUp(
+    Offset position,
+  ) {
     _onHover(position, data.touchable);
     if (data.onColorSelected != null) {
       data.onColorSelected!(data.hoverColors.center);
@@ -87,7 +89,8 @@ class EyeDrop extends InheritedWidget {
     }
   }
 
-  static void _onHover(Offset offset, bool touchable) {
+  static void _onHover(Offset offset, bool touchable,
+      {Offset adjustmentOffset = Offset.zero}) {
     if (data.eyeOverlayEntry != null) data.eyeOverlayEntry!.markNeedsBuild();
 
     data.cursorPosition = offset;
@@ -95,7 +98,7 @@ class EyeDrop extends InheritedWidget {
     data.touchable = touchable;
 
     /// Update the offset to center of the grid
-    final _updatedOffset = offset + Offset(0, -_gridSize / 4);
+    final _updatedOffset = offset + adjustmentOffset;
 
     if (data.snapshot != null) {
       data.hoverColor = getPixelColor(data.snapshot!, _updatedOffset);
